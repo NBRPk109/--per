@@ -1,0 +1,170 @@
+import warnings
+warnings.filterwarnings('ignore')
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, PolynomialFeatures
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge
+from sklearn.feature_selection import RFE
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+import mglearn
+import mglearn
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+from pandas import read_csv
+import datetime
+from datetime import datetime
+import pandas as pd
+from datetime import datetime as dt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import LinearSVC
+url = 'D:/PRSA_data_2010.1.1-2014.12.31.csv'
+#raw_data = pd.read_csv(url,  parse_dates = [['year', 'month', 'day', 'hour']], index_col=0, date_parser=parse)
+raw_data = pd.read_csv(url)
+chosen_data = raw_data.dropna(axis=0, how='any', inplace=False)
+# Drop 'No' column
+chosen_data.drop('No', inplace=True, axis=1)
+
+raw_data.info()
+raw_data.shape
+
+# Check for missing values
+raw_data.isnull().sum()
+
+import matplotlib.pyplot as plt
+values = chosen_data.values
+# Select the variables to plot
+series = [0,1, 2, 3, 5, 6, 7]
+i = 1
+# make seperate plots for each column
+plt.figure()
+for var in series:
+	plt.subplot(len(series), 1, i)
+	plt.plot(values[:, var])
+	plt.title(chosen_data.columns[var], y=0.5, loc='left')
+	i += 1
+plt.show()
+
+a=chosen_data['pm'].groupby([chosen_data['year'],chosen_data['month']]).agg(pd.Series.mean).reset_index()
+df1 = pd.DataFrame(a,columns=['month','pm'])
+
+
+n_train = 48
+# function to evaluate and plot a regressor on a given feature set
+def eval_on_features(features, target, regressor):
+    # split the given features into a training and a test set
+    X_train, X_test,  X_p = features[:n_train], features[n_train:58], features[58:]
+
+    #print(" the shape of train and test set\n" ,X_train.shape,X_test.shape)
+    # also split the target array
+    y_train, y_test, y_p = target[:n_train],target[n_train:58], target[58:]
+    #print(" the shape of ytrain and ytest set\n" ,y_train.shape,y_test.shape)
+    #print(target[:n_train],target[n_train:])
+    regressor.fit(X_train, y_train)
+    print("Test-set R^2: {:.2f}".format(regressor.score(X_test, y_test)))
+    y_pred = regressor.predict(X_p)
+    print( "   年   月\n",X_p)
+    print("pm2.5预测值\n", y_pred) 
+    
+def eval_on_features1(features, target, regressor):
+    # split the given features into a training and a test set
+    X_train, X_test,  X_p = features[:240], features[240:290], features[290:]
+    #print(" the shape of train and test set\n" ,X_train.shape,X_test.shape)
+    # also split the target array
+    y_train, y_test, y_p = target[:240],target[240:290], target[290:]
+    print(" the shape of ytrain and ytest set\n" ,y_train.shape,y_test.shape)
+    #print(target[:n_train],target[n_train:])
+    regressor.fit(X_train, y_train)
+    print("Test-set R^2: {:.2f}".format(regressor.score(X_test, y_test)))
+    y_pred = regressor.predict(X_p)
+    print( "   月   年   风向（LabelEncoder编码后）\n",X_p)
+    print("pm2.5预测值\n", y_pred)
+chosen_data['cbwd']
+chosen_data['cbwd'].value_counts()
+encoder = LabelEncoder()
+chosen_data['cbwd'] = encoder.fit_transform(chosen_data['cbwd'])
+chosen_data['cbwd'].value_counts()
+#print(chosen_data['cbwd'].groupby([chosen_data['year'],chosen_data['month']]).agg(pd.Series.mode).reset_index())
+a=chosen_data['pm'].groupby([chosen_data['year'],chosen_data['month']]).agg(pd.Series.mean).reset_index()
+df1 = pd.DataFrame(a,columns=['month','pm'])
+qwe = chosen_data['cbwd'].groupby([chosen_data['year'],chosen_data['month']]).agg(pd.Series.mode).reset_index()
+df2 = pd.DataFrame(qwe,columns=['year','month','cbwd'])
+df3 = pd.merge(df1,df2,how = 'left',on= 'month')
+df3
+X_1 = df1.month.values.reshape(-1, 1)
+y=df1.pm.values.reshape(1 ,-1)
+
+print(X_1.shape)
+print(y.shape)
+print(y)
+# np.hstack([df3['cbwd'].values.reshape(-1, 1)]df3['month'].values.reshape(-1, 1)
+from sklearn.linear_model import LinearRegression
+regressor=LinearRegression()
+print(X_1.shape,y.shape)
+eval_on_features(X_1 , y[0], regressor)
+X_3 = np.hstack([df3.month.values.reshape(-1, 1),
+                 df3.year.values.reshape(-1, 1),
+                 df3.cbwd.values.reshape(-1, 1)])
+y1=df3.pm.values.reshape(1 ,-1) 
+from sklearn.linear_model import LinearRegression
+regressor=LinearRegression()
+print(X_2.shape,y1.shape)
+eval_on_features1(X_2 , y1[0], regressor)
+y1=df3.pm.values.reshape(1 ,-1) 
+from sklearn.ensemble import RandomForestRegressor
+regressor1 = RandomForestRegressor(n_estimators=100, random_state=0)
+print(X_2.shape,y1.shape)
+eval_on_features1(X_3 , y1[0], regressor1)
+from sklearn.preprocessing import OneHotEncoder
+enc = OneHotEncoder()
+X_3_onehot = enc.fit_transform(X_3).toarray()
+eval_on_features1(X_3_onehot , y1[0], regressor)
+scaler = MinMaxScaler(feature_range=(0,1))
+X_4 = scaler.fit_transform(X_3) 
+eval_on_features1(X_4 , y1[0], regressor)
+from sklearn.linear_model import Ridge
+eval_on_features1(X_3_poly, y1[0], Ridge())
+poly_transformer = PolynomialFeatures(degree=3, interaction_only=True,
+                                      include_bias=False)
+
+X_3_poly = poly_transformer.fit_transform(X_3)
+eval_on_features1(X_3_onehot_poly, y1[0], regressor)
+from sklearn.preprocessing import OneHotEncoder
+enc = OneHotEncoder()
+X_3_onehot = enc.fit_transform(X_3).toarray()
+eval_on_features1(X_3_onehot , y1[0], regressor)
+poly_transformer = PolynomialFeatures(degree=10, interaction_only=True,
+                                      include_bias=False)
+
+X_3_onehot_poly = poly_transformer.fit_transform(X_3_onehot)
+def eval_on_features2(features, target, regressor):
+    # split the given features into a training and a test set
+    X_train, X_test,  X_p = features[:1200], features[1200:1480], features[1480:]
+    #print(" the shape of train and test set\n" ,X_train.shape,X_test.shape)
+    # also split the target array
+    y_train, y_test, y_p = target[:1200],target[1200:1480], target[1480:]
+    #print(" the shape of ytrain and ytest set\n" ,y_train.shape,y_test.shape)
+    #print(target[:n_train],target[n_train:])
+    regressor.fit(X_train, y_train)
+    print("Test-set R^2: {:.2f}".format(regressor.score(X_test, y_test)))
+    y_pred = regressor.predict(X_p)
+    print( "   年   月  风向  风速\n",X_p)
+    print("pm2.5预测值\n", y_pred) 
+b=chosen_data['Iws'].groupby([chosen_data['year'],chosen_data['month']]).agg(pd.Series.mean).reset_index()
+#a=chosen_data['pm2.5'].groupby([chosen_data['year'],chosen_data['month']]).mean()
+df4 = pd.DataFrame(b,columns=['month','Iws'])
+df5 = pd.merge(df3,df4,how = 'left',on= 'month')
+df3
+
+X_5 = np.hstack([df5.month.values.reshape(-1, 1),
+                 df5.year.values.reshape(-1, 1),
+                 df5.cbwd.values.reshape(-1, 1),
+                 df5.Iws.values.reshape(-1, 1)])
+y2=df5.pm.values.reshape(1 ,-1) 
+from sklearn.linear_model import LinearRegression
+regressor=LinearRegression()
+print(X_5.shape,y1.shape)
+eval_on_features2(X_5 , y2[0], regressor1)
